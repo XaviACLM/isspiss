@@ -1,0 +1,1 @@
+A way to get familiar with claude code. A project that seemed like a funny idea under the influence (still does).
