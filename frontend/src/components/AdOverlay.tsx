@@ -29,9 +29,13 @@ export function AdOverlay({ children }: AdOverlayProps) {
         {backgroundAds}
       </div>
 
-      {/* Main content with semi-opaque background */}
-      <div className="absolute inset-0 flex items-center justify-center p-8">
-        <div className="bg-white/90 backdrop-blur-sm rounded-lg p-8 shadow-xl max-w-xl">
+      {/* Main content with semi-transparent background */}
+      <div className="absolute inset-0 flex items-center justify-center p-4">
+        <div
+          className="bg-[#faf8f5]/80 backdrop-blur-sm p-12 shadow-xl font-serif
+                     w-full max-w-lg h-64 flex items-center justify-center
+                     md:h-72 md:max-w-xl lg:h-80 lg:max-w-2xl"
+        >
           {children}
         </div>
       </div>

@@ -28,7 +28,7 @@ export function DebugPanel() {
   if (!mock) return null;
 
   return (
-    <div className="fixed bottom-20 lg:bottom-4 left-4 bg-gray-800 text-white p-3 rounded-lg shadow-lg text-sm z-50">
+    <div className="fixed bottom-20 lg:bottom-4 left-4 bg-gray-800 text-white p-3 rounded-lg shadow-lg text-sm z-[100]">
       <div className="font-bold mb-2 text-gray-400">Debug</div>
       <button
         onClick={handleTogglePiss}

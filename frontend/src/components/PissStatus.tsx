@@ -5,8 +5,13 @@ interface PissStatusProps {
   state: PissState;
 }
 
-function formatTimeSince(date: Date | null): string {
-  if (!date) return 'unknown';
+interface TimeFormat {
+  phrase: string;
+  usesNotForTheLast: boolean;
+}
+
+function formatTimeSince(date: Date | null): TimeFormat {
+  if (!date) return { phrase: 'unknown', usesNotForTheLast: true };
 
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -16,31 +21,60 @@ function formatTimeSince(date: Date | null): string {
   const diffDays = Math.floor(diffHours / 24);
 
   if (diffDays > 0) {
-    return diffDays === 1 ? '1 day' : `${diffDays} days`;
+    return {
+      phrase: diffDays === 1 ? 'day' : `${diffDays} days`,
+      usesNotForTheLast: true,
+    };
   }
   if (diffHours > 0) {
-    return diffHours === 1 ? '1 hour' : `${diffHours} hours`;
+    return {
+      phrase: diffHours === 1 ? 'hour' : `${diffHours} hours`,
+      usesNotForTheLast: true,
+    };
   }
   if (diffMinutes > 0) {
-    return diffMinutes === 1 ? '1 minute' : `${diffMinutes} minutes`;
+    if (diffMinutes === 1) {
+      return { phrase: 'minute', usesNotForTheLast: true };
+    }
+    if (diffMinutes === 2) {
+      return { phrase: 'couple minutes', usesNotForTheLast: true };
+    }
+    return { phrase: `${diffMinutes} minutes`, usesNotForTheLast: true };
   }
-  return 'less than a minute';
+  if (diffSeconds < 5) {
+    return { phrase: 'anymore', usesNotForTheLast: false };
+  }
+  return {
+    phrase: `${diffSeconds} seconds`,
+    usesNotForTheLast: true,
+  };
 }
 
-function formatDuration(date: Date | null): string {
-  if (!date) return '0 seconds';
+interface DurationFormat {
+  text: string;
+  elapsedSeconds: number;
+}
+
+function formatDuration(date: Date | null): DurationFormat {
+  if (!date) return { text: '0 seconds', elapsedSeconds: 0 };
 
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffSeconds = Math.floor(diffMs / 1000);
 
   if (diffSeconds < 60) {
-    return `${diffSeconds} second${diffSeconds !== 1 ? 's' : ''}`;
+    return {
+      text: `${diffSeconds} second${diffSeconds !== 1 ? 's' : ''}`,
+      elapsedSeconds: diffSeconds,
+    };
   }
 
   const minutes = Math.floor(diffSeconds / 60);
   const seconds = diffSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  return {
+    text: `${minutes}:${seconds.toString().padStart(2, '0')}`,
+    elapsedSeconds: diffSeconds,
+  };
 }
 
 function getGrowthScale(startTime: Date | null): number {
@@ -65,15 +99,16 @@ export function PissStatus({ state }: PissStatusProps) {
     return () => clearInterval(interval);
   }, [state.isPissing]);
 
-  const timeSinceLastPiss = formatTimeSince(state.lastPissEnded);
-  const pissDuration = formatDuration(state.currentPissStarted);
+  const timeSince = formatTimeSince(state.lastPissEnded);
+  const duration = formatDuration(state.currentPissStarted);
   const growthScale = getGrowthScale(state.currentPissStarted);
+  const showDuration = duration.elapsedSeconds >= 10;
 
   return (
     <div className="text-left relative">
       <p
-        className={`text-lg font-light tracking-tight transition-all duration-300 ${
-          state.isPissing ? 'text-gray-400' : 'text-gray-500'
+        className={`text-lg tracking-tight transition-all duration-300 lg:-translate-x-6 ${
+          state.isPissing ? 'text-gray-500' : 'text-gray-600'
         }`}
       >
         Is anyone currently pissing on the ISS?
@@ -82,23 +117,27 @@ export function PissStatus({ state }: PissStatusProps) {
       <div className="mt-4">
         {state.isPissing ? (
           <div
-            className="transition-transform duration-100 ease-out"
+            className="transition-transform duration-100 ease-out flex items-baseline gap-2"
             style={{
               transform: `scale(${growthScale})`,
               transformOrigin: 'bottom left',
               marginTop: `-${(growthScale - 1) * 30}px`,
             }}
           >
-            <p className="text-5xl font-bold text-amber-500">
-              Yes
+            <p className="text-5xl font-bold text-gray-900">
+              Yes.
             </p>
-            <p className="text-lg text-amber-400/80 mt-1">
-              ({pissDuration}...)
-            </p>
+            {showDuration && (
+              <p className="text-2xl text-gray-600">
+                ({duration.text}...)
+              </p>
+            )}
           </div>
         ) : (
           <p className="text-2xl font-normal text-gray-700">
-            Not for the last {timeSinceLastPiss}
+            {timeSince.usesNotForTheLast
+              ? `Not for the last ${timeSince.phrase}`
+              : `Not ${timeSince.phrase}`}.
           </p>
         )}
       </div>
