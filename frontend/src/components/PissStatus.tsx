@@ -95,7 +95,7 @@ export function PissStatus({ state }: PissStatusProps) {
   useEffect(() => {
     const interval = setInterval(() => {
       forceUpdate((n) => n + 1);
-    }, state.isPissing ? 100 : 1000);
+    }, state.isPissing ? 10 : 1000);
     return () => clearInterval(interval);
   }, [state.isPissing]);
 
@@ -107,34 +107,30 @@ export function PissStatus({ state }: PissStatusProps) {
   return (
     <div className="text-left relative">
       <p
-        className={`text-lg tracking-tight transition-all duration-300 lg:-translate-x-6 ${
-          state.isPissing ? 'text-gray-500' : 'text-gray-600'
-        }`}
+        className={`text-3xl italic tracking-tight transition-all duration-300 lg:-translate-x-10 text-gray-400`}
       >
-        Is anyone currently pissing on the ISS?
+	    {"> Is anyone currently pissing on the ISS?"}
       </p>
-
       <div className="mt-4">
         {state.isPissing ? (
           <div
-            className="transition-transform duration-100 ease-out flex items-baseline gap-2"
+            className="transition-transform duration-100 ease-out flex items-baseline gap-2 lg:translate-x-10"
             style={{
               transform: `scale(${growthScale})`,
               transformOrigin: 'bottom left',
-              marginTop: `-${(growthScale - 1) * 30}px`,
             }}
           >
             <p className="text-5xl font-bold text-gray-900">
               Yes.
             </p>
             {showDuration && (
-              <p className="text-2xl text-gray-600">
+              <p className="text-3xl text-gray-600">
                 ({duration.text}...)
               </p>
             )}
           </div>
         ) : (
-          <p className="text-2xl font-normal text-gray-700">
+          <p className="text-3xl font-normal text-gray-900 lg:translate-x-10">
             {timeSince.usesNotForTheLast
               ? `Not for the last ${timeSince.phrase}`
               : `Not ${timeSince.phrase}`}.

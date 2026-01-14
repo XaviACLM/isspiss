@@ -31,7 +31,7 @@ function App() {
   if (adMode === 'transitioning') {
     return (
       <div className="min-h-screen bg-[#faf8f5] flex items-center justify-center font-serif">
-        <p className="text-2xl text-gray-600 animate-pulse">Sure thing!</p>
+        <p className="text-2xl text-gray-900">Sure thing!</p>
       </div>
     );
   }

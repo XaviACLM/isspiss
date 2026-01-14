@@ -1,40 +1,67 @@
 import { useMemo } from 'react';
-import { PlaceholderAd } from './PlaceholderAd';
+
+// Dynamically import all GIFs from public/ads at build time
+const adGlob = import.meta.glob('/public/ads/*.gif', { eager: true, query: '?url', import: 'default' });
+const AD_GIFS = Object.keys(adGlob).map(path => path.replace('/public', ''));
+
+// How many times each unique GIF appears
+const COPIES_PER_GIF = 2;
+
+interface AdPlacement {
+  src: string;
+  left: number;
+  top: number;
+  zIndex: number;
+}
 
 interface AdOverlayProps {
   children: React.ReactNode;
 }
 
 export function AdOverlay({ children }: AdOverlayProps) {
-  // Generate a grid of ads to fill the background
-  const backgroundAds = useMemo(() => {
-    // Create enough ads to fill a large screen
-    const ads: React.ReactNode[] = [];
-    for (let i = 0; i < 60; i++) {
-      ads.push(
-        <PlaceholderAd
-          key={i}
-          width={Math.floor(Math.random() * 150) + 100}
-          height={Math.floor(Math.random() * 100) + 60}
-        />
-      );
+  // Generate chaotic random placements for ads
+  const adPlacements = useMemo((): AdPlacement[] => {
+    const placements: AdPlacement[] = [];
+    for (let copy = 0; copy < COPIES_PER_GIF; copy++) {
+      for (const src of AD_GIFS) {
+        placements.push({
+          src,
+          left: Math.random() * 100,
+          top: Math.random() * 100,
+          zIndex: Math.floor(Math.random() * 50),
+        });
+      }
     }
-    return ads;
+    return placements;
   }, []);
 
   return (
     <div className="fixed inset-0 z-40 overflow-hidden">
-      {/* Ad-filled background */}
-      <div className="absolute inset-0 flex flex-wrap gap-2 p-2 content-start overflow-hidden">
-        {backgroundAds}
-      </div>
+      {/* Chaotic ad background */}
+      {adPlacements.map((ad, i) => (
+        <img
+          key={i}
+          src={ad.src}
+          alt=""
+          className="absolute"
+          style={{
+            left: `${ad.left}%`,
+            top: `${ad.top}%`,
+            zIndex: ad.zIndex,
+            transform: 'translate(-50%, -50%)',
+          }}
+        />
+      ))}
 
       {/* Main content with semi-transparent background */}
-      <div className="absolute inset-0 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none"
+        style={{ zIndex: 60 }}
+      >
         <div
-          className="bg-[#faf8f5]/80 backdrop-blur-sm p-12 shadow-xl font-serif
+          className="bg-[#faf8f5]/70 backdrop-blur-sm p-12 shadow-xl font-serif
                      w-full max-w-lg h-64 flex items-center justify-center
-                     md:h-72 md:max-w-xl lg:h-80 lg:max-w-2xl"
+                     md:h-72 md:max-w-xl lg:h-80 lg:max-w-2xl pointer-events-auto"
         >
           {children}
         </div>

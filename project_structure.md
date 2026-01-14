@@ -98,7 +98,7 @@ This will be swapped for the real SSE connection when backend is ready.
 |                |           above             |                   |
 |                |                             |                   |
 +------------------------------------------------------------------+
-|  [Excuse me, could I get some more ads?]    |   (bottom corner) |
+|  [Excuse me, could I get some more ads?]    |   (top left corner, immediately right of the ads column) |
 +------------------------------------------------------------------+
 ```
 
@@ -193,12 +193,19 @@ isspiss/
 ## Development Phases
 
 ### Phase 1: Frontend (Current)
-- [ ] Set up React + Vite + Tailwind project
-- [ ] Implement mock event source with debug controls
-- [ ] Build main UI components
-- [ ] Implement ad system (normal + excessive modes)
-- [ ] Responsive design (mobile)
-- [ ] Polish animations and transitions
+- [x] Set up React + Vite + Tailwind project
+- [x] Implement mock event source with debug controls
+- [x] Build main UI components
+- [x] Implement ad system (normal + excessive modes)
+- [x] Responsive design (mobile)
+- [x] Polish animations and transitions
+
+#### Design Notes
+- **Typography**: Serif fonts (Georgia fallback) for an elegant, print-like aesthetic
+- **Color**: Light tan/cream background (#faf8f5) evoking newsprint
+- **Layout**: Question text offset left of answer on desktop for a literary feel
+- **"Yes" reveal**: Duration counter appears after 10 seconds as a delayed punchline
+- **Excessive ads mode**: Fixed-size semitransparent card (no rounded corners)
 
 ### Phase 2: Backend
 - [ ] Set up Cloudflare Workers project
