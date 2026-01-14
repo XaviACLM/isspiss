@@ -16,8 +16,13 @@ class MockPissEventSource implements PissEventSource {
   };
 
   private static listeners: MockEventSourceListener[] = [];
+  private static currentInstance: MockPissEventSource | null = null;
 
   static onInstanceCreated(listener: MockEventSourceListener): () => void {
+    // Call immediately if instance already exists
+    if (this.currentInstance) {
+      listener(this.currentInstance);
+    }
     this.listeners.push(listener);
     return () => {
       this.listeners = this.listeners.filter((l) => l !== listener);
@@ -30,7 +35,8 @@ class MockPissEventSource implements PissEventSource {
     // Send initial status
     handlers.onStatus({ ...this.state });
 
-    // Notify listeners that an instance is ready
+    // Store instance and notify listeners
+    MockPissEventSource.currentInstance = this;
     MockPissEventSource.listeners.forEach((l) => l(this));
 
     return () => {
