@@ -212,6 +212,12 @@ isspiss/
 - Filter for `craft: "ISS"` to get ISS crew only
 - Poll every 60 seconds
 
+### Piss Detection Logic
+- **Piss start**: Tank level increases from previous value
+- **Piss end**: No tank level increase for 20 seconds
+- Simple timeout-based detection; no cooldown or debouncing
+- Edge case accepted: if final drops take >20s, brief "no" then back to "yes" is tolerable
+
 ---
 
 ## Development Phases
