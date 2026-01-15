@@ -104,6 +104,9 @@ export function PissStatus({ state }: PissStatusProps) {
   const growthScale = getGrowthScale(state.currentPissStarted);
   const showDuration = duration.elapsedSeconds >= 10;
 
+  // Show loading state before SSE data arrives
+  const isLoading = state.tankLevel === 0 && !state.isPissing;
+
   return (
     <div className="text-left relative">
       <p
@@ -112,7 +115,11 @@ export function PissStatus({ state }: PissStatusProps) {
 	    {"> Is anyone currently pissing on the ISS?"}
       </p>
       <div className="mt-4">
-        {state.isPissing ? (
+        {isLoading ? (
+          <p className="text-3xl font-normal text-gray-900 lg:translate-x-10">
+            Wait, let me check.
+          </p>
+        ) : state.isPissing ? (
           <div
             className="transition-transform duration-100 ease-out flex items-baseline gap-2 lg:translate-x-10"
             style={{

@@ -83,7 +83,12 @@ An in-browser mock implementing `PissEventSource` that:
 - Allows manual triggering of piss start/end events
 - Simulates realistic-ish timing (piss events every ~30 min, lasting ~1-2 min)
 
-This will be swapped for the real SSE connection when backend is ready.
+**To use mock mode** (enables DebugPanel):
+```powershell
+$env:VITE_USE_MOCK="true"; npm run dev
+```
+
+By default (no env var), the frontend connects to the real backend at `http://127.0.0.1:8787`.
 
 ---
 
@@ -263,10 +268,10 @@ isspiss/
 ### Phase 2: Backend (Current)
 - [x] Set up Cloudflare Workers project
 - [x] Research Lightstreamer connection (identified NODE3000005, NODE3000004)
-- [ ] Implement Durable Object for state management
-- [ ] Implement piss detection logic
-- [ ] Integrate Open Notify API for crew data
-- [ ] Build SSE endpoint with real data
+- [x] Implement Durable Object for state management
+- [x] Implement piss detection logic
+- [x] Integrate Launch Library 2 API for crew data
+- [x] Build SSE endpoint with real data
 - [ ] Deploy and test
 
 ### Phase 3: Launch

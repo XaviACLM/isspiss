@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { PissState, PissEventSource } from '../types';
 import { createMockEventSource } from '../services/mockEventSource';
+import { createPissEventSource } from '../services/pissEventSource';
 
 const initialState: PissState = {
   isPissing: false,
@@ -9,13 +10,14 @@ const initialState: PissState = {
   currentPissStarted: null,
 };
 
+const useMock = import.meta.env.VITE_USE_MOCK === 'true';
+
 export function usePissEvents(): PissState {
   const [state, setState] = useState<PissState>(initialState);
   const sourceRef = useRef<PissEventSource | null>(null);
 
   useEffect(() => {
-    // For now, always use mock. Later we can swap this based on env/config.
-    const source = createMockEventSource();
+    const source = useMock ? createMockEventSource() : createPissEventSource();
     sourceRef.current = source;
 
     const unsubscribe = source.subscribe({
