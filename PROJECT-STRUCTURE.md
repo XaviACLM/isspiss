@@ -17,7 +17,9 @@ Live at: isspiss.com (eventually)
 ### Backend (Phase 2 - Later)
 - **Runtime**: Cloudflare Workers
 - **State**: Cloudflare Durable Objects (for persistent connection to NASA + stats)
-- **Data Source**: NASA ISS telemetry via Lightstreamer protocol
+- **Data Sources**:
+  - NASA ISS telemetry via Lightstreamer protocol (urine tank data)
+  - Open Notify API (current ISS crew)
 - **Deployment**: Wrangler CLI
 
 ---
@@ -32,13 +34,16 @@ The frontend opens a persistent connection to `/events` and listens for server-p
 
 ```
 event: status
-data: {"isPissing": false, "tankLevel": 47, "lastPissEnded": "2024-01-13T12:34:56Z"}
+data: {"isPissing": false, "tankLevel": 47, "lastPissEnded": "2024-01-13T12:34:56Z", "crew": ["Oleg Kononenko", "Nikolai Chub", "Tracy Dyson"]}
 
 event: pissStart
 data: {"tankLevel": 47, "startedAt": "2024-01-13T12:45:00Z"}
 
 event: pissEnd
 data: {"tankLevel": 51, "endedAt": "2024-01-13T12:46:30Z", "deltaPercent": 4}
+
+event: crewUpdate
+data: {"crew": ["Oleg Kononenko", "Nikolai Chub", "Tracy Dyson"]}
 ```
 
 ### Frontend Interface
@@ -49,6 +54,7 @@ interface PissState {
   tankLevel: number;          // 0-100, 1% resolution
   lastPissEnded: Date | null;
   currentPissStarted: Date | null;
+  crew: string[];             // Names of astronauts currently on ISS
 }
 
 // Connection abstraction (allows swapping real SSE for mock)
@@ -58,6 +64,7 @@ interface PissEventSource {
     onPissStart: (data: { tankLevel: number; startedAt: Date }) => void;
     onPissEnd: (data: { tankLevel: number; endedAt: Date; deltaPercent: number }) => void;
     onTankUpdate: (data: { tankLevel: number }) => void;
+    onCrewUpdate: (data: { crew: string[] }) => void;
   }): () => void;  // returns unsubscribe function
 }
 ```
@@ -124,6 +131,10 @@ This will be swapped for the real SSE connection when backend is ready.
 
 Ads are placeholders (random rectangles) until real ad integration.
 
+### Crew information
+
+The frontend will have to actually show the information of who is on the ISS, but how this will work specifically is TBD.
+
 ---
 
 ## Project Structure
@@ -175,18 +186,31 @@ isspiss/
 
 ### Responsibilities
 1. Maintain single Lightstreamer connection to NASA ISS telemetry
-2. Filter for urine tank level updates
+2. Filter for urine tank level updates (NODE3000005)
 3. Detect piss events (tank level increasing = piss in progress)
 4. Store state: current status, last piss event, daily stats
-5. Push updates to connected frontends via SSE
+5. Fetch ISS crew from Open Notify API (every minute)
+6. Push updates to connected frontends via SSE
 
 ### Endpoints
 - `GET /events` - SSE stream of piss events
 - `GET /status` - Current state as JSON (fallback/debugging)
 
 ### NASA Lightstreamer Details
-- TBD: Need to research exact subscription parameters, field names for urine tank data
-- The ISS telemetry stream includes many data points; we filter for relevant ones
+- Server: `https://push.lightstreamer.com`
+- Adapter Set: `ISSLIVE`
+- Subscription mode: `MERGE`
+- Fields: `TimeStamp`, `Value`, `Status.Class`, `Status.Indicator`
+- **Telemetry items**:
+  - `NODE3000005` - Urine Tank Level (%) - primary data source
+  - `NODE3000004` - Urine Processor State (may indicate active processing)
+- Reference: https://iss-mimic.github.io/Mimic/ (live telemetry viewer with labels)
+
+### Open Notify API Details
+- URL: `http://api.open-notify.org/astros.json`
+- Returns all people in space with their craft (ISS or Tiangong)
+- Filter for `craft: "ISS"` to get ISS crew only
+- Poll every 60 seconds
 
 ---
 
@@ -199,6 +223,7 @@ isspiss/
 - [x] Implement ad system (normal + excessive modes)
 - [x] Responsive design (mobile)
 - [x] Polish animations and transitions
+- [ ] Decide on and implement the "who is in the ISS" component/s
 
 #### Design Notes
 - **Typography**: Serif fonts (Georgia fallback) for an elegant, print-like aesthetic
@@ -207,12 +232,14 @@ isspiss/
 - **"Yes" reveal**: Duration counter appears after 10 seconds as a delayed punchline
 - **Excessive ads mode**: Fixed-size semitransparent card (no rounded corners)
 
-### Phase 2: Backend
-- [ ] Set up Cloudflare Workers project
-- [ ] Research and implement Lightstreamer connection
+### Phase 2: Backend (Current)
+- [x] Set up Cloudflare Workers project
+- [x] Research Lightstreamer connection (identified NODE3000005, NODE3000004)
 - [ ] Implement Durable Object for state management
-- [ ] Build SSE endpoint
-- [ ] Deploy and test with real data
+- [ ] Implement piss detection logic
+- [ ] Integrate Open Notify API for crew data
+- [ ] Build SSE endpoint with real data
+- [ ] Deploy and test
 
 ### Phase 3: Launch
 - [ ] Connect frontend to real backend

@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Hey Claude. This is the ISS Piss project. Read `project_structure.md` for the full specification.
+Hey Claude. This is the ISS Piss project. Read `PROJECT-STRUCTURE.md` for the full specification. Read `RESEARCH.md` for notes on the relevant information gathered for this project (ISS specs, telemetry format, relevant APIs...).
 
 ## Quick Summary
 
