@@ -2,11 +2,10 @@ name = "isspiss-backend"
 main = "src/index.ts"
 compatibility_date = "2024-12-18"
 
-# Durable Objects binding (we'll use this later for state management)
-# [[durable_objects.bindings]]
-# name = "PISS_MONITOR"
-# class_name = "PissMonitor"
+[[durable_objects.bindings]]
+name = "PISS_MONITOR"
+class_name = "PissMonitor"
 
-# [[migrations]]
-# tag = "v1"
-# new_classes = ["PissMonitor"]
+[[migrations]]
+tag = "v1"
+new_classes = ["PissMonitor"]
