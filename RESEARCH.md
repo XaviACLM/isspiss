@@ -47,27 +47,40 @@ https://iss-mimic.github.io/Mimic/
 
 ## Astronaut Data
 
-**API**: Open Notify - People in Space
+### ~~Open Notify API~~ (DEPRECATED - DO NOT USE)
+
 **URL**: http://api.open-notify.org/astros.json
 
-Returns JSON with everyone currently in space:
-```json
-{
-  "number": 10,
-  "people": [
-    {"name": "Oleg Kononenko", "craft": "ISS"},
-    {"name": "...", "craft": "Tiangong"},
-    ...
-  ]
-}
+This API is manually maintained and significantly out of date (showed 9 crew when only 3 are aboard). Do not use.
+
+### Launch Library 2 API (The Space Devs)
+
+More complex but accurate. Requires multiple requests to get full crew info.
+
+**Step 1: Get ISS data**
 ```
+GET https://ll.thespacedevs.com/2.3.0/space_stations/4/
+```
+- ID 4 is the ISS (fixed)
+- `onboard_crew`: number (but may lag behind reality)
+- `active_expeditions`: list of expedition objects with `url` field
 
-- Includes both ISS and Tiangong crews
-- `craft` field distinguishes station
-- Could display on frontend: "X people currently aboard"
-- Crew changes are rare (every few months)
+**Step 2: Get expedition details**
+```
+GET https://ll.thespacedevs.com/2.3.0/expeditions/{id}/
+```
+- `crew`: list of crew member objects
 
-**Integration approach**: Backend fetches every 60 seconds, caches, and pushes to frontends via SSE. Avoids CORS issues and redundant requests.
+**Step 3: Extract astronaut info**
+Each crew member has an `astronaut` object containing:
+- `name`: full name
+- `agency.name` / `agency.abbrev`: e.g. "NASA", "Roscosmos"
+- `nationality[].alpha_2_code` / `alpha_3_code`: e.g. "US", "USA"
+- `nationality[].name` / `nationality_name`: e.g. "United States", "American"
+- `wiki`: Wikipedia URL
+- `social_media_links[]`: each has `url` and `social_media.name` / `social_media.logo.thumbnail_url`
+
+**Integration approach**: Backend fetches every 60 seconds, caches, and pushes to frontends via SSE. Will need to chain requests: station → expeditions → crew details.
 
 ---
 
@@ -75,3 +88,4 @@ Returns JSON with everyone currently in space:
 
 - [ ] Analyze 2-day-long telemetry log for patterns
 - [ ] Determine NODE3000004 values and what they mean
+- [ ] Replace Open Notify with Launch Library 2 API in backend
