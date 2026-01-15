@@ -143,17 +143,18 @@ Ads are placeholders (random rectangles) until real ad integration.
 
 ### Crew Display
 
-Display a simple list of current ISS crew members:
+Simple list of current ISS crew, displayed below the main Q&A (right-aligned on desktop). Hidden in excessive ads mode.
+
 ```
 Currently aboard:
-• Sergey Mikayev (Roscosmos)
-• Christopher Williams (NASA)
-• Sergey Kud-Sverchkov (Roscosmos)
+Sergey Mikayev (Roscosmos)
+Christopher Williams (NASA)
+Sergey Kud-Sverchkov (Roscosmos)
 ```
 
-**Included:**
-- Name
-- Agency abbreviation (NASA, Roscosmos, ESA, JAXA, etc.)
+- Header "Currently aboard:" in italic
+- No bullets, clean list
+- Name + agency abbreviation (NASA, Roscosmos, ESA, JAXA, etc.)
 
 **Explicitly excluded** (to keep UI minimal and deadpan):
 - Nationality flags - redundant with agency info
@@ -233,11 +234,12 @@ isspiss/
   - `NODE3000004` - Urine Processor State (may indicate active processing)
 - Reference: https://iss-mimic.github.io/Mimic/ (live telemetry viewer with labels)
 
-### Open Notify API Details
-- URL: `http://api.open-notify.org/astros.json`
-- Returns all people in space with their craft (ISS or Tiangong)
-- Filter for `craft: "ISS"` to get ISS crew only
+### Crew Data (Launch Library 2 API)
+- Fetches from `https://ll.thespacedevs.com/2.3.0/space_stations/4/`
+- Chains requests: station → expeditions → crew details
+- Extracts name and agency abbreviation (RFSA normalized to "Roscosmos")
 - Poll every 60 seconds
+- See `RESEARCH.md` for full API documentation
 
 ### Piss Detection Logic
 - **Piss start**: Tank level increases from previous value
@@ -249,14 +251,14 @@ isspiss/
 
 ## Development Phases
 
-### Phase 1: Frontend (Current)
+### Phase 1: Frontend
 - [x] Set up React + Vite + Tailwind project
 - [x] Implement mock event source with debug controls
 - [x] Build main UI components
 - [x] Implement ad system (normal + excessive modes)
 - [x] Responsive design (mobile)
 - [x] Polish animations and transitions
-- [ ] Decide on and implement the "who is in the ISS" component/s
+- [x] Crew display component
 
 #### Design Notes
 - **Typography**: Serif fonts (Georgia fallback) for an elegant, print-like aesthetic
@@ -275,7 +277,9 @@ isspiss/
 - [ ] Deploy and test
 
 ### Phase 3: Launch
-- [ ] Connect frontend to real backend
+- [x] Connect frontend to real backend
+- [ ] Deploy backend to Cloudflare Workers
+- [ ] Deploy frontend to hosting
 - [ ] Set up real ad integration
 - [ ] Deploy to isspiss.com
 - [ ] Profit (pay for domain)

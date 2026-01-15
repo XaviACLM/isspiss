@@ -3,6 +3,7 @@ import type { PissState } from '../types';
 
 interface PissStatusProps {
   state: PissState;
+  excessiveAdsMode?: boolean;
 }
 
 interface TimeFormat {
@@ -88,7 +89,7 @@ function getGrowthScale(startTime: Date | null): number {
   return scale;
 }
 
-export function PissStatus({ state }: PissStatusProps) {
+export function PissStatus({ state, excessiveAdsMode = false }: PissStatusProps) {
   const [, forceUpdate] = useState(0);
 
   // Update the display every 100ms for smooth growth animation
@@ -144,6 +145,19 @@ export function PissStatus({ state }: PissStatusProps) {
           </p>
         )}
       </div>
+
+      {!excessiveAdsMode && state.crew.length > 0 && (
+        <div className="mt-12 text-sm text-gray-500 lg:text-right">
+          <p className="mb-1 italic">Currently aboard:</p>
+          <ul>
+            {state.crew.map((member) => (
+              <li key={member.name}>
+				{""} {member.name} ({member.agency})
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

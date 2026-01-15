@@ -36,13 +36,13 @@ function App() {
     );
   }
 
-  const mainContent = <PissStatus state={pissState} />;
-
   // Excessive ads mode
   if (adMode === 'excessive') {
     return (
       <>
-        <AdOverlay>{mainContent}</AdOverlay>
+        <AdOverlay>
+          <PissStatus state={pissState} excessiveAdsMode />
+        </AdOverlay>
         <DebugPanel />
       </>
     );
@@ -55,7 +55,7 @@ function App() {
 
       <main className="flex-1 flex items-center justify-center p-8">
         <div className="max-w-xl">
-          {mainContent}
+          <PissStatus state={pissState} />
         </div>
       </main>
 

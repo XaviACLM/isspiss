@@ -19,6 +19,7 @@ class RealPissEventSource implements PissEventSource {
         tankLevel: data.tankLevel,
         lastPissEnded: parseDate(data.lastPissEnded),
         currentPissStarted: parseDate(data.currentPissStarted),
+        crew: data.crew ?? [],
       };
       handlers.onStatus(state);
     });
@@ -44,6 +45,13 @@ class RealPissEventSource implements PissEventSource {
       const data = JSON.parse(event.data);
       handlers.onTankUpdate({
         tankLevel: data.tankLevel,
+      });
+    });
+
+    this.eventSource.addEventListener('crewUpdate', (event) => {
+      const data = JSON.parse(event.data);
+      handlers.onCrewUpdate({
+        crew: data.crew ?? [],
       });
     });
 

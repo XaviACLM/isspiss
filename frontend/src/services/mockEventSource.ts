@@ -13,6 +13,11 @@ class MockPissEventSource implements PissEventSource {
     tankLevel: 42,
     lastPissEnded: new Date(Date.now() - 1000 * 60 * 17), // 17 minutes ago
     currentPissStarted: null,
+    crew: [
+      { name: 'Test Astronaut', agency: 'NASA' },
+      { name: 'Mock Cosmonaut', agency: 'Roscosmos' },
+      { name: 'Debug Taikonaut', agency: 'CNSA' },
+    ],
   };
 
   private static listeners: MockEventSourceListener[] = [];

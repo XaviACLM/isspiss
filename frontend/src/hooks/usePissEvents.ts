@@ -8,6 +8,7 @@ const initialState: PissState = {
   tankLevel: 0,
   lastPissEnded: null,
   currentPissStarted: null,
+  crew: [],
 };
 
 const useMock = import.meta.env.VITE_USE_MOCK === 'true';
@@ -45,6 +46,12 @@ export function usePissEvents(): PissState {
         setState((prev) => ({
           ...prev,
           tankLevel: data.tankLevel,
+        }));
+      },
+      onCrewUpdate: (data) => {
+        setState((prev) => ({
+          ...prev,
+          crew: data.crew,
         }));
       },
     });
