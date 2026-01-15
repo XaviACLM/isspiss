@@ -88,4 +88,4 @@ Each crew member has an `astronaut` object containing:
 
 - [ ] Analyze 2-day-long telemetry log for patterns
 - [ ] Determine NODE3000004 values and what they mean
-- [ ] Replace Open Notify with Launch Library 2 API in backend
+- [x] Replace Open Notify with Launch Library 2 API in backend

@@ -168,20 +168,45 @@ export class PissMonitor implements DurableObject {
 
   private async fetchCrew(): Promise<void> {
     try {
-      const response = await fetch('http://api.open-notify.org/astros.json');
-      const data = await response.json() as {
-        people: Array<{ name: string; craft: string }>;
+      // Step 1: Get ISS data with active expeditions
+      const stationResponse = await fetch(
+        'https://ll.thespacedevs.com/2.3.0/space_stations/4/'
+      );
+      if (!stationResponse.ok) {
+        throw new Error(`Station fetch failed: ${stationResponse.status}`);
+      }
+      const stationData = await stationResponse.json() as {
+        active_expeditions: Array<{ url: string }>;
       };
 
-      const issCrew = data.people
-        .filter((p) => p.craft === 'ISS')
-        .map((p) => p.name);
+      // Step 2: Fetch each expedition to get crew
+      const crewNames: string[] = [];
+      for (const expedition of stationData.active_expeditions) {
+        const expeditionResponse = await fetch(expedition.url);
+        if (!expeditionResponse.ok) continue;
 
+        const expeditionData = await expeditionResponse.json() as {
+          crew: Array<{
+            astronaut: { name: string };
+          }>;
+        };
+
+        // Step 3: Extract astronaut names
+        for (const member of expeditionData.crew) {
+          const name = member.astronaut?.name;
+          if (name && !crewNames.includes(name)) {
+            crewNames.push(name);
+          }
+        }
+      }
+
+      // Update state if crew changed
       const oldCrew = this.pissState.crew;
-      if (JSON.stringify(oldCrew) !== JSON.stringify(issCrew)) {
-        this.pissState.crew = issCrew;
-        this.broadcast('crewUpdate', { crew: issCrew });
+      if (JSON.stringify(oldCrew.sort()) !== JSON.stringify(crewNames.sort())) {
+        this.pissState.crew = crewNames;
+        this.broadcast('crewUpdate', { crew: crewNames });
         this.state.storage.put('pissState', this.pissState);
+        console.log(`[Crew] Updated: ${crewNames.length} astronauts`);
       }
     } catch (error) {
       console.error('[Crew] Fetch error:', error);
