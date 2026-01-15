@@ -36,5 +36,5 @@ yarn-error.log*
 .dev.vars
 
 # Claude Code temp files
-tmpclaude-*
+**/tmpclaude-*
 .claude/
