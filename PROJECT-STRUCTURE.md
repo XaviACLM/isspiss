@@ -238,7 +238,7 @@ isspiss/
 - Fetches from `https://ll.thespacedevs.com/2.3.0/space_stations/4/`
 - Chains requests: station → expeditions → crew details
 - Extracts name and agency abbreviation (RFSA normalized to "Roscosmos")
-- Poll every 60 seconds
+- Poll every 20 minutes, keep old data if throttled
 - See `RESEARCH.md` for full API documentation
 
 ### Piss Detection Logic

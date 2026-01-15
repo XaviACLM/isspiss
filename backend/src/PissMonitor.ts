@@ -21,7 +21,7 @@ interface Env {
 }
 
 const PISS_TIMEOUT_MS = 20_000; // 20 seconds without increase = piss ended
-const CREW_POLL_INTERVAL_MS = 60_000; // 1 minute
+const CREW_POLL_INTERVAL_MS = 1_200_000; // 20 minutes
 
 export class PissMonitor implements DurableObject {
   private state: DurableObjectState;
@@ -183,6 +183,10 @@ export class PissMonitor implements DurableObject {
       const stationData = await stationResponse.json() as {
         active_expeditions: Array<{ url: string }>;
       };
+	  
+	  if (stationData.active_expeditions === undefined) {
+		throw new Error(`Invalid station response: missing active_expeditions field (likely throttled)`)
+	  }
 
       // Step 2: Fetch each expedition to get crew
       const crewMembers: CrewMember[] = [];
@@ -200,6 +204,10 @@ export class PissMonitor implements DurableObject {
             };
           }>;
         };
+	  
+		if (expeditionData.crew === undefined) {
+		  throw new Error(`Invalid expedition response: missing crew field (likely throttled)`)
+		}
 
         // Step 3: Extract astronaut name and agency
         for (const member of expeditionData.crew) {

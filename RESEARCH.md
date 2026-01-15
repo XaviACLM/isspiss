@@ -80,7 +80,9 @@ Each crew member has an `astronaut` object containing:
 - `wiki`: Wikipedia URL
 - `social_media_links[]`: each has `url` and `social_media.name` / `social_media.logo.thumbnail_url`
 
-**Integration approach**: Backend fetches every 60 seconds, caches, and pushes to frontends via SSE. Will need to chain requests: station → expeditions → crew details.
+**Throttling**: The API is quite strict, for now allowing only 15 queries per hour. We fetch every 20 minutes (expected 6-9 queries per hour) and keep old data if fetches fail.
+
+**Integration approach**: Backend fetches every 20 minutes, caches, and pushes to frontends via SSE. Will need to chain requests: station → expeditions → crew details.
 
 ---
 
