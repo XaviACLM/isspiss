@@ -217,7 +217,7 @@ isspiss/
 2. Filter for urine tank level updates (NODE3000005)
 3. Detect piss events (tank level increasing = piss in progress)
 4. Store state: current status, last piss event, daily stats
-5. Fetch ISS crew from Open Notify API (every minute)
+5. Fetch ISS crew from Launch Libray 2 API (every 20 minutes)
 6. Push updates to connected frontends via SSE
 
 ### Endpoints
