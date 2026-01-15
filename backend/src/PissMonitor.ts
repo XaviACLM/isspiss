@@ -3,12 +3,17 @@ import {
   Subscription,
 } from 'lightstreamer-client-web';
 
+interface CrewMember {
+  name: string;
+  agency: string;
+}
+
 interface PissState {
   isPissing: boolean;
   tankLevel: number;
   lastPissEnded: string | null;
   currentPissStarted: string | null;
-  crew: string[];
+  crew: CrewMember[];
 }
 
 interface Env {
@@ -180,33 +185,49 @@ export class PissMonitor implements DurableObject {
       };
 
       // Step 2: Fetch each expedition to get crew
-      const crewNames: string[] = [];
+      const crewMembers: CrewMember[] = [];
+      const seenNames = new Set<string>();
+
       for (const expedition of stationData.active_expeditions) {
         const expeditionResponse = await fetch(expedition.url);
         if (!expeditionResponse.ok) continue;
 
         const expeditionData = await expeditionResponse.json() as {
           crew: Array<{
-            astronaut: { name: string };
+            astronaut: {
+              name: string;
+              agency?: { abbrev?: string };
+            };
           }>;
         };
 
-        // Step 3: Extract astronaut names
+        // Step 3: Extract astronaut name and agency
         for (const member of expeditionData.crew) {
           const name = member.astronaut?.name;
-          if (name && !crewNames.includes(name)) {
-            crewNames.push(name);
-          }
+          if (!name || seenNames.has(name)) continue;
+          seenNames.add(name);
+
+          let agency = member.astronaut?.agency?.abbrev ?? 'Unknown';
+          // Normalize agency names
+          if (agency === 'RFSA') agency = 'Roscosmos';
+
+          crewMembers.push({ name, agency });
         }
       }
 
       // Update state if crew changed
-      const oldCrew = this.pissState.crew;
-      if (JSON.stringify(oldCrew.sort()) !== JSON.stringify(crewNames.sort())) {
-        this.pissState.crew = crewNames;
-        this.broadcast('crewUpdate', { crew: crewNames });
+      const oldCrewJson = JSON.stringify(
+        [...this.pissState.crew].sort((a, b) => a.name.localeCompare(b.name))
+      );
+      const newCrewJson = JSON.stringify(
+        [...crewMembers].sort((a, b) => a.name.localeCompare(b.name))
+      );
+
+      if (oldCrewJson !== newCrewJson) {
+        this.pissState.crew = crewMembers;
+        this.broadcast('crewUpdate', { crew: crewMembers });
         this.state.storage.put('pissState', this.pissState);
-        console.log(`[Crew] Updated: ${crewNames.length} astronauts`);
+        console.log(`[Crew] Updated: ${crewMembers.length} astronauts`);
       }
     } catch (error) {
       console.error('[Crew] Fetch error:', error);

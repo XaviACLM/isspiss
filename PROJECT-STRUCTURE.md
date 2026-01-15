@@ -34,7 +34,7 @@ The frontend opens a persistent connection to `/events` and listens for server-p
 
 ```
 event: status
-data: {"isPissing": false, "tankLevel": 47, "lastPissEnded": "2024-01-13T12:34:56Z", "crew": ["Oleg Kononenko", "Nikolai Chub", "Tracy Dyson"]}
+data: {"isPissing": false, "tankLevel": 47, "lastPissEnded": "2024-01-13T12:34:56Z", "crew": [{"name": "Oleg Kononenko", "agency": "Roscosmos"}, {"name": "Tracy Dyson", "agency": "NASA"}]}
 
 event: pissStart
 data: {"tankLevel": 47, "startedAt": "2024-01-13T12:45:00Z"}
@@ -43,18 +43,23 @@ event: pissEnd
 data: {"tankLevel": 51, "endedAt": "2024-01-13T12:46:30Z", "deltaPercent": 4}
 
 event: crewUpdate
-data: {"crew": ["Oleg Kononenko", "Nikolai Chub", "Tracy Dyson"]}
+data: {"crew": [{"name": "Oleg Kononenko", "agency": "Roscosmos"}, {"name": "Tracy Dyson", "agency": "NASA"}]}
 ```
 
 ### Frontend Interface
 
 ```ts
+interface CrewMember {
+  name: string;
+  agency: string;  // e.g. "NASA", "Roscosmos", "ESA", "JAXA"
+}
+
 interface PissState {
   isPissing: boolean;
   tankLevel: number;          // 0-100, 1% resolution
   lastPissEnded: Date | null;
   currentPissStarted: Date | null;
-  crew: string[];             // Names of astronauts currently on ISS
+  crew: CrewMember[];
 }
 
 // Connection abstraction (allows swapping real SSE for mock)
@@ -64,7 +69,7 @@ interface PissEventSource {
     onPissStart: (data: { tankLevel: number; startedAt: Date }) => void;
     onPissEnd: (data: { tankLevel: number; endedAt: Date; deltaPercent: number }) => void;
     onTankUpdate: (data: { tankLevel: number }) => void;
-    onCrewUpdate: (data: { crew: string[] }) => void;
+    onCrewUpdate: (data: { crew: CrewMember[] }) => void;
   }): () => void;  // returns unsubscribe function
 }
 ```
@@ -131,9 +136,26 @@ This will be swapped for the real SSE connection when backend is ready.
 
 Ads are placeholders (random rectangles) until real ad integration.
 
-### Crew information
+### Crew Display
 
-The frontend will have to actually show the information of who is on the ISS, but how this will work specifically is TBD.
+Display a simple list of current ISS crew members:
+```
+Currently aboard:
+• Sergey Mikayev (Roscosmos)
+• Christopher Williams (NASA)
+• Sergey Kud-Sverchkov (Roscosmos)
+```
+
+**Included:**
+- Name
+- Agency abbreviation (NASA, Roscosmos, ESA, JAXA, etc.)
+
+**Explicitly excluded** (to keep UI minimal and deadpan):
+- Nationality flags - redundant with agency info
+- Wikipedia links - feature creep
+- Social media links - off-topic
+
+The Launch Library 2 API provides much more data (nationality, wiki, social media). See `RESEARCH.md` for details if we decide to expand this later.
 
 ---
 
