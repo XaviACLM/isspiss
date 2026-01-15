@@ -19,7 +19,7 @@ Live at: isspiss.com (eventually)
 - **State**: Cloudflare Durable Objects (for persistent connection to NASA + stats)
 - **Data Sources**:
   - NASA ISS telemetry via Lightstreamer protocol (urine tank data)
-  - Open Notify API (current ISS crew)
+  - Launch Libray 2 API (current ISS crew)
 - **Deployment**: Wrangler CLI
 
 ---
@@ -129,7 +129,7 @@ By default (no env var), the frontend connects to the real backend at `http://12
 2. **Pissing in progress**:
    - Answer changes to "Yes"
    - Text grows larger over time, carelessly clipping into question above
-   - Possibly show duration: "Yes (47 seconds...)"
+   - After a delay, show duration: "Yes (47 seconds...)"
 
 ### Ad System
 
@@ -139,7 +139,7 @@ By default (no env var), the frontend connects to the real backend at `http://12
   - Return with ads saturating entire background
   - Main content gets semi-opaque background to remain readable
 
-Ads are placeholders (random rectangles) until real ad integration.
+Ads are placeholders (empty rectangles) until real ad integration. For excessive ads mode, the "ads" are simply a collection of flashy ad gifs kept at /public/ads.
 
 ### Crew Display
 
