@@ -194,7 +194,9 @@ export class PissMonitor implements DurableObject {
 
       for (const expedition of stationData.active_expeditions) {
         const expeditionResponse = await fetch(expedition.url);
-        if (!expeditionResponse.ok) continue;
+        if (!expeditionResponse.ok) {
+          throw new Error(`Expedition fetch failed: ${expeditionResponse.status}`);
+		}
 
         const expeditionData = await expeditionResponse.json() as {
           crew: Array<{
