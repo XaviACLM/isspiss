@@ -5,6 +5,7 @@ import { DebugPanel } from './components/DebugPanel';
 import { AdColumn } from './components/AdColumn';
 import { MobileAdBanner } from './components/MobileAdBanner';
 import { MoreAdsButton } from './components/MoreAdsButton';
+import { ExplanationPanel } from './components/ExplanationPanel';
 import { AdOverlay } from './components/AdOverlay';
 
 type AdMode = 'normal' | 'transitioning' | 'excessive';
@@ -62,6 +63,7 @@ function App() {
       <AdColumn side="right" />
 
       <MobileAdBanner />
+      <ExplanationPanel />
       <MoreAdsButton onClick={handleMoreAds} />
       <DebugPanel />
     </div>

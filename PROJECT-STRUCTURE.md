@@ -163,6 +163,10 @@ Sergey Kud-Sverchkov (Roscosmos)
 
 The Launch Library 2 API provides much more data (nationality, wiki, social media). See `RESEARCH.md` for details if we decide to expand this later.
 
+### Explanation
+
+A small button labeled "What" appears on the top right (same in mobile). Upon clicking, it opens a panel with some information about the website - what it is, authors, data sources, repo link, credit Claude. On large screens this panel is centered and the background is blurred and slightly darkened. On mobile, the panel simply takes up the whole screen. A small X on the top right of the panel allows for closing.
+
 ---
 
 ## Project Structure
