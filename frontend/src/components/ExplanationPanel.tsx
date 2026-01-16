@@ -31,6 +31,39 @@ function textLink(url: string, text: string) {
 	);
 }
 
+function authors() {
+	const xavi = (
+	  <>
+	    Xavi Arnal (
+		{iconLink("https://xaviaclm.github.io/", faGlobe)},
+		{iconLink("https://github.com/XaviACLM", faGithub)},
+		{iconLink("https://www.linkedin.com/in/xavi-arnal-524256218/", faLinkedin)}
+		)
+	  </>
+	);
+	const marcel = (
+	  <>
+	    Marcel Vilasís (
+		{iconLink("https://marcelvilasis.com/", faGlobe)},
+		{iconLink("https://github.com/D01-MarcelVilasis", faGithub)},
+		{iconLink("https://www.linkedin.com/in/marcel-vilasis-gasulla/", faLinkedin)}
+		)
+	  </>
+	);
+	const coinflip = Math.random() < 0.5;
+	return ( coinflip ? 
+	  (
+		<>
+		{xavi} and {marcel}
+		</>
+	  ) : (
+		<>
+		{marcel} and {xavi}
+		</>
+	  )
+	);
+}
+
 export function ExplanationPanel() {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -69,15 +102,7 @@ export function ExplanationPanel() {
           <div className="space-y-4 text-gray-700">
             <p>
               This is a website that provides real-time information about whether someone aboard the International Space Station is currently taking a piss.
-              The people to blame are Xavi Arnal (
-			  {iconLink("https://xaviaclm.github.io/", faGlobe)},
-			  {iconLink("https://github.com/XaviACLM", faGithub)},
-			  {iconLink("https://www.linkedin.com/in/xavi-arnal-524256218/", faLinkedin)}
-			  ) and Marcel Vilasís (
-			  {iconLink("https://marcelvilasis.com/", faGlobe)},
-			  {iconLink("https://github.com/D01-MarcelVilasis", faGithub)},
-			  {iconLink("https://www.linkedin.com/in/marcel-vilasis-gasulla/", faLinkedin)}
-			  ).
+              The people to blame are {authors()}.
             </p>
             
             <p>
