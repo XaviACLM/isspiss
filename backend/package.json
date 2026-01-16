@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241218.0",
@@ -15,6 +17,9 @@
     "wrangler": "^4.14.1"
   },
   "dependencies": {
-    "lightstreamer-client-web": "^9.2.0"
+    "lightstreamer-client-web": "^9.2.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.2",
+    "wrangler": "^4.14.1"
   }
 }
