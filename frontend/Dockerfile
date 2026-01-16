@@ -1,5 +1,5 @@
 # --- Build stage ---
-FROM node:20-alpine AS build
+FROM node:20-slim
 
 WORKDIR /app
 
@@ -13,13 +13,7 @@ COPY . .
 # Build TypeScript + Vite
 RUN npm run build
 
-# --- Serve stage ---
-FROM node:20-alpine
-
-WORKDIR /app
-
-# Copy built files
-COPY --from=build /app/dist ./dist
+# COPY /app/dist ./dist
 
 # Install serve for static hosting
 RUN npm install -g serve

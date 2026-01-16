@@ -1,0 +1,13 @@
+services:
+  backend:
+    container_name: iss-piss-backend
+    image: node:20-slim
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: sh -c "npm install && npx wrangler dev --local --host 0.0.0.0 --port 8787"
+    # ports:
+    #   - "8787:8787"
+    environment:
+      NODE_ENV: development
+    network_mode: "host"

@@ -1,6 +1,6 @@
 import type { PissEventSource, PissEventHandlers, PissState } from '../types';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8787';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8787';
 
 function parseDate(value: string | null): Date | null {
   return value ? new Date(value) : null;

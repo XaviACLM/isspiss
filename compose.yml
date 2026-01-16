@@ -1,21 +1,31 @@
 services:
-  backend:
-    container_name: iss-piss-backend
-    image: node:20-slim
-    working_dir: /app
-    volumes:
-      - ./backend:/app
-    command: sh -c "npm install && npx wrangler dev --local --host 0.0.0.0 --port 8787"
-    ports:
-      - "8787:8787"
-    environment:
-      NODE_ENV: development
+  # backend:
+  #   container_name: iss-piss-backend
+  #   image: node:20-slim
+  #   working_dir: /app
+  #   volumes:
+  #     - ./backend:/app
+  #   command: sh -c "npm install && npx wrangler dev --local --host 0.0.0.0 --port 8787"
+  #   ports:
+  #     - "8787:8787"
+  #   environment:
+  #     NODE_ENV: development
+  #   networks:
+  #     - app-network
 
   frontend:
     container_name: iss-piss-frontend
-    build:
-      context: ./frontend
+    build: ./frontend
     ports:
       - "5173:5173"
     environment:
       NODE_ENV: production
+      VITE_BACKEND_URL: "http://localhost:8787"
+    # depends_on:
+    #   - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
