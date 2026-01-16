@@ -3,6 +3,34 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { faGithub, faLinkedin } from '@fortawesome/free-brands-svg-icons';
 
+function iconLink(url: string, faIcon: typeof faTimes) {
+	return (
+	  <a
+		href={url}
+		target="_blank"
+		rel="noopener noreferrer"
+		className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 
+				   transition-colors translate-y-1"
+	  >
+		<FontAwesomeIcon icon={faIcon} />
+	  </a>
+	);
+}
+
+function textLink(url: string, text: string) {
+	return (
+	  <a
+		href={url}
+		target="_blank"
+		rel="noopener noreferrer"
+		className="text-gray-400 hover:text-gray-800 
+		           transition-colors"
+	  >
+	    {text}
+	  </a>
+	);
+}
+
 export function ExplanationPanel() {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -42,65 +70,13 @@ export function ExplanationPanel() {
             <p>
               This is a website that provides real-time information about whether someone aboard the International Space Station is currently taking a piss.
               The people to blame are Xavi Arnal (
-			  <a
-                href="https://xaviaclm.github.io/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 
-                           transition-colors translate-y-1"
-              >
-                <FontAwesomeIcon icon={faGlobe} />
-              </a>
-			  ,
-			  <a
-                href="https://github.com/XaviACLM"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 
-                           transition-colors translate-y-1"
-              >
-                <FontAwesomeIcon icon={faGithub} />
-              </a>
-			  ,
-			  <a
-                href="https://www.linkedin.com/in/xavi-arnal-524256218/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 
-                           transition-colors translate-y-1"
-              >
-                <FontAwesomeIcon icon={faLinkedin} />
-              </a>
+			  {iconLink("https://xaviaclm.github.io/", faGlobe)},
+			  {iconLink("https://github.com/XaviACLM", faGithub)},
+			  {iconLink("https://www.linkedin.com/in/xavi-arnal-524256218/", faLinkedin)}
 			  ) and Marcel Vilasís (
-			  <a
-                href="https://www.bigassmessage.com/4naff"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 
-                           transition-colors translate-y-1"
-              >
-                <FontAwesomeIcon icon={faGlobe} />
-              </a>
-			  ,
-			  <a
-                href="https://www.bigassmessage.com/yffgd"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 
-                           transition-colors translate-y-1"
-              >
-                <FontAwesomeIcon icon={faGithub} />
-              </a>
-			  ,
-			  <a
-                href="https://www.linkedin.com/in/marcel-vilasis-gasulla/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800 
-                           transition-colors translate-y-1"
-              >
-                <FontAwesomeIcon icon={faLinkedin} />
-              </a>
+			  {iconLink("https://marcelvilasis.com/", faGlobe)},
+			  {iconLink("https://github.com/D01-MarcelVilasis", faGithub)},
+			  {iconLink("https://www.linkedin.com/in/marcel-vilasis-gasulla/", faLinkedin)}
 			  ).
             </p>
             
@@ -109,45 +85,16 @@ export function ExplanationPanel() {
 			  <ul className="list-disc list-outside pl-6 space-y-0 text-gray-700">
 			    <li>The ISSLive! public telemetry feed, delivered via Lightstreamer, for status data about the urine tank on the ISS.</li>
 			    <li>
-				  The{" "}
-				  <a
-					href="https://thespacedevs.com/llapi"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="text-gray-400 hover:text-gray-800 
-							   transition-colors"
-				  >
-					Launch Library 2 API
-				  </a>
-				  ,	for data about who is aboard the ISS.
+				  The {textLink("https://thespacedevs.com/llapi","Launch Library 2 API")},	for data about who is aboard the ISS.
 				</li>
 			    <li>
-				  <a
-					href="https://gifcities.org"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="text-gray-400 hover:text-gray-800 
-							   transition-colors"
-				  >
-					gifcities.org
-				  </a>
-				  , for — well, you know. Or you will.
+				  {textLink("https://gifcities.org","gifcities.org")}, for — well, you know. Or you will.
 				</li>
 			  </ul>
             </p>
             
             <p>
-			  More information about these, as well as the website itself, may be found at its{" "}
-			  <a
-                href="https://github.com/XaviACLM/isspiss"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-gray-800 
-                           transition-colors"
-              >
-                GitHub repository
-              </a>
-			  .
+			  More information about these, as well as the website itself, may be found at its {textLink("https://github.com/XaviACLM/isspiss","GitHub repository")}.
 			  Almost everything within was written by Claude Code.
             </p>
           </div>
