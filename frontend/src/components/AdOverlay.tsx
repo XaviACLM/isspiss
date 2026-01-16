@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
 
 // Dynamically import all GIFs from public/ads at build time
-const adGlob = import.meta.glob('/public/ads/*.gif', { eager: true, query: '?url', import: 'default' });
-const AD_GIFS = Object.keys(adGlob).map(path => path.replace('/public', ''));
+//const adGlob = import.meta.glob('/public/ads/*.gif', { eager: true, query: '?url', import: 'default' });
+//const AD_GIFS = Object.keys(adGlob).map(path => path.replace('/public', ''));
+const adGlob = import.meta.glob('/ads/*.gif', { eager: true, query: '?url', import: 'default' });
+const AD_GIFS = Object.keys(adGlob);
 
 // How many times each unique GIF appears
 const COPIES_PER_GIF = 2;
