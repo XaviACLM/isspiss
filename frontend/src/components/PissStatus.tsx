@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import type { PissState } from '../types';
 
 interface PissStatusProps {
-  state: PissState;
+  state: PissState | null;
   excessiveAdsMode?: boolean;
 }
 
@@ -96,27 +96,27 @@ export function PissStatus({ state, excessiveAdsMode = false }: PissStatusProps)
   useEffect(() => {
     const interval = setInterval(() => {
       forceUpdate((n) => n + 1);
-    }, state.isPissing ? 10 : 1000);
+    }, state?.isPissing ? 10 : 1000);
     return () => clearInterval(interval);
-  }, [state.isPissing]);
+  }, [state?.isPissing]);
 
-  const timeSince = formatTimeSince(state.lastPissEnded);
-  const duration = formatDuration(state.currentPissStarted);
-  const growthScale = getGrowthScale(state.currentPissStarted);
+  const dataLoaded = state !== null;
+
+  // dummy values (for the type checker) in case we haven't loaded yet
+  const timeSince = dataLoaded ? formatTimeSince(state.lastPissEnded) : {phrase: '', usesNotForTheLast: false};
+  const duration = dataLoaded ? formatDuration(state.currentPissStarted) : {text: '', elapsedSeconds: 0};
+  const growthScale = dataLoaded ? getGrowthScale(state.currentPissStarted) : 1;
   const showDuration = duration.elapsedSeconds >= 10;
-
-  // Show loading state before SSE data arrives
-  const isLoading = state.tankLevel === 0 && !state.isPissing;
 
   return (
     <div className="text-left relative">
       <p
-        className={`text-3xl italic tracking-tight transition-all duration-300 lg:-translate-x-10 text-gray-400`}
+        className={`text-3xl italic tracking-tight transition-all duration-300 lg:-translate-x-7 text-gray-500`}
       >
 	    {"> Is anyone currently pissing on the ISS?"}
       </p>
       <div className="mt-4">
-        {isLoading ? (
+        {!dataLoaded ? (
           <p className="text-3xl font-normal text-gray-900 lg:translate-x-10">
             Wait, let me check.
           </p>
@@ -139,14 +139,14 @@ export function PissStatus({ state, excessiveAdsMode = false }: PissStatusProps)
           </div>
         ) : (
           <p className="text-3xl font-normal text-gray-900 lg:translate-x-10">
-            {timeSince.usesNotForTheLast
+            {state.lastPissEnded === null ? 'Not right now' : timeSince.usesNotForTheLast
               ? `Not for the last ${timeSince.phrase}`
               : `Not ${timeSince.phrase}`}.
           </p>
         )}
       </div>
 
-      {!excessiveAdsMode && state.crew.length > 0 && (
+      {!excessiveAdsMode && dataLoaded && state.crew.length > 0 && (
         <div className="mt-12 text-sm text-gray-500 lg:text-right">
           <p className="mb-1 italic">Currently aboard:</p>
           <ul>

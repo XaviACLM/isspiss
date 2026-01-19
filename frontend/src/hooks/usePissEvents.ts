@@ -3,18 +3,10 @@ import type { PissState, PissEventSource } from '../types';
 import { createMockEventSource } from '../services/mockEventSource';
 import { createPissEventSource } from '../services/pissEventSource';
 
-const initialState: PissState = {
-  isPissing: false,
-  tankLevel: 0,
-  lastPissEnded: null,
-  currentPissStarted: null,
-  crew: [],
-};
-
 const useMock = import.meta.env.VITE_USE_MOCK === 'true';
 
-export function usePissEvents(): PissState {
-  const [state, setState] = useState<PissState>(initialState);
+export function usePissEvents(): PissState | null {
+  const [state, setState] = useState<PissState | null>(null);
   const sourceRef = useRef<PissEventSource | null>(null);
 
   useEffect(() => {
@@ -26,33 +18,34 @@ export function usePissEvents(): PissState {
         setState(newState);
       },
       onPissStart: (data) => {
-        setState((prev) => ({
-          ...prev,
-          isPissing: true,
-          tankLevel: data.tankLevel,
-          currentPissStarted: data.startedAt,
-        }));
+        setState((prev) => {
+		  if (prev === null) {return null;}
+		  return {
+            ...prev,
+            isPissing: true,
+            currentPissStarted: data.startedAt,
+		  }
+        });
       },
       onPissEnd: (data) => {
-        setState((prev) => ({
-          ...prev,
-          isPissing: false,
-          tankLevel: data.tankLevel,
-          lastPissEnded: data.endedAt,
-          currentPissStarted: null,
-        }));
-      },
-      onTankUpdate: (data) => {
-        setState((prev) => ({
-          ...prev,
-          tankLevel: data.tankLevel,
-        }));
+        setState((prev) => {
+		  if (prev === null) {return null;}
+		  return {
+            ...prev,
+            isPissing: false,
+            lastPissEnded: data.endedAt,
+            currentPissStarted: null,
+		  }
+        });
       },
       onCrewUpdate: (data) => {
-        setState((prev) => ({
-          ...prev,
-          crew: data.crew,
-        }));
+        setState((prev) => {
+		  if (prev === null) {return null;}
+		  return {
+            ...prev,
+            crew: data.crew,
+		  }
+        });
       },
     });
 

@@ -38,3 +38,6 @@ yarn-error.log*
 # Claude Code temp files
 **/tmpclaude-*
 .claude/
+
+# Other Claude
+claude_chats/

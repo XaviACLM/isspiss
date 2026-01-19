@@ -107,16 +107,16 @@ export function ExplanationPanel() {
             
             <p>
 			  This website benefits from:
-			  <ul className="list-disc list-outside pl-6 space-y-0 text-gray-700">
-			    <li>The ISSLive! public telemetry feed, delivered via Lightstreamer, for status data about the urine tank on the ISS.</li>
-			    <li>
-				  The {textLink("https://thespacedevs.com/llapi","Launch Library 2 API")},	for data about who is aboard the ISS.
-				</li>
-			    <li>
-				  {textLink("https://gifcities.org","gifcities.org")}, for — well, you know. Or you will.
-				</li>
-			  </ul>
             </p>
+			<ul className="list-disc list-outside pl-6 space-y-0 text-gray-700">
+			  <li>The ISSLive! public telemetry feed, delivered via Lightstreamer, for status data about the urine tank on the ISS.</li>
+			  <li>
+			    The {textLink("https://thespacedevs.com/llapi","Launch Library 2 API")},	for data about who is aboard the ISS.
+			  </li>
+			  <li>
+			    {textLink("https://gifcities.org","gifcities.org")}, for — well, you know. Or you will.
+			  </li>
+			</ul>
             
             <p>
 			  More information about these, as well as the website itself, may be found at its {textLink("https://github.com/XaviACLM/isspiss","GitHub repository")}.

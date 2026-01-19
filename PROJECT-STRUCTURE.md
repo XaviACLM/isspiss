@@ -14,17 +14,22 @@ Live at: isspiss.com (eventually)
 - **Build Tool**: Vite
 - **Deployment**: TBD (likely Cloudflare Pages or similar static hosting)
 
-### Backend (Phase 2 - Later)
-- **Runtime**: Cloudflare Workers
-- **State**: Cloudflare Durable Objects (for persistent connection to NASA + stats)
+### Backend
+- **Runtime**: Cloudflare Durable Objects (required for Lightstreamer - standard Workers' execution environment doesn't support the library)
 - **Data Sources**:
   - NASA ISS telemetry via Lightstreamer protocol (urine tank data)
-  - Launch Libray 2 API (current ISS crew)
+  - Launch Library 2 API (current ISS crew)
 - **Deployment**: Wrangler CLI
 
 ---
 
 ## Frontend-Backend Communication
+
+The frontend starts with a request to '/status', which catches it up with all the relevant data:
+
+```
+{"isPissing": false, "lastPissEnded": "2024-01-13T12:34:56Z", "crew": [{"name": "Oleg Kononenko", "agency": "Roscosmos"}, {"name": "Tracy Dyson", "agency": "NASA"}]}
+```
 
 **Protocol**: Server-Sent Events (SSE)
 
@@ -33,14 +38,11 @@ The frontend opens a persistent connection to `/events` and listens for server-p
 ### Event Types
 
 ```
-event: status
-data: {"isPissing": false, "tankLevel": 47, "lastPissEnded": "2024-01-13T12:34:56Z", "crew": [{"name": "Oleg Kononenko", "agency": "Roscosmos"}, {"name": "Tracy Dyson", "agency": "NASA"}]}
-
 event: pissStart
-data: {"tankLevel": 47, "startedAt": "2024-01-13T12:45:00Z"}
+data: {"startedAt": "2024-01-13T12:45:00Z"}
 
 event: pissEnd
-data: {"tankLevel": 51, "endedAt": "2024-01-13T12:46:30Z", "deltaPercent": 4}
+data: {"endedAt": "2024-01-13T12:46:30Z", "deltaPercent": 4}
 
 event: crewUpdate
 data: {"crew": [{"name": "Oleg Kononenko", "agency": "Roscosmos"}, {"name": "Tracy Dyson", "agency": "NASA"}]}
@@ -56,7 +58,6 @@ interface CrewMember {
 
 interface PissState {
   isPissing: boolean;
-  tankLevel: number;          // 0-100, 1% resolution
   lastPissEnded: Date | null;
   currentPissStarted: Date | null;
   crew: CrewMember[];
@@ -65,10 +66,8 @@ interface PissState {
 // Connection abstraction (allows swapping real SSE for mock)
 interface PissEventSource {
   subscribe(handlers: {
-    onStatus: (state: PissState) => void;
-    onPissStart: (data: { tankLevel: number; startedAt: Date }) => void;
-    onPissEnd: (data: { tankLevel: number; endedAt: Date; deltaPercent: number }) => void;
-    onTankUpdate: (data: { tankLevel: number }) => void;
+    onPissStart: (data: { startedAt: Date }) => void;
+    onPissEnd: (data: { endedAt: Date }) => void;
     onCrewUpdate: (data: { crew: CrewMember[] }) => void;
   }): () => void;  // returns unsubscribe function
 }
@@ -139,7 +138,7 @@ By default (no env var), the frontend connects to the real backend at `http://12
   - Return with ads saturating entire background
   - Main content gets semi-opaque background to remain readable
 
-Ads are placeholders (empty rectangles) until real ad integration. For excessive ads mode, the "ads" are simply a collection of flashy ad gifs kept at /public/ads.
+Ads are placeholders (empty rectangles) until real ad integration. For excessive ads mode, the "ads" are simply a collection of flashy ad gifs kept at `/src/assets/gifs` (not `/ads` - that gets blocked by adblockers).
 
 ### Crew Display
 
@@ -197,13 +196,10 @@ isspiss/
 │   ├── tsconfig.json
 │   └── package.json
 │
-├── backend/                        # Phase 2
+├── backend/
 │   ├── src/
-│   │   ├── index.ts                # Worker entry
-│   │   ├── durableObjects/
-│   │   │   └── pissMonitor.ts      # Lightstreamer connection + state
-│   │   └── routes/
-│   │       └── events.ts           # SSE endpoint
+│   │   ├── index.ts                # Worker entry, forwards to Durable Object
+│   │   └── PissMonitor.ts          # Durable Object: Lightstreamer, SSE, state
 │   ├── wrangler.toml
 │   └── package.json
 │
@@ -214,19 +210,19 @@ isspiss/
 
 ---
 
-## Backend Specification (Phase 2)
+## Backend Specification
 
 ### Responsibilities
 1. Maintain single Lightstreamer connection to NASA ISS telemetry
 2. Filter for urine tank level updates (NODE3000005)
 3. Detect piss events (tank level increasing = piss in progress)
-4. Store state: current status, last piss event, daily stats
+4. Store state: current status, last piss event, maybe daily stats
 5. Fetch ISS crew from Launch Libray 2 API (every 20 minutes)
 6. Push updates to connected frontends via SSE
 
 ### Endpoints
 - `GET /events` - SSE stream of piss events
-- `GET /status` - Current state as JSON (fallback/debugging)
+- `GET /status` - Current state as JSON
 
 ### NASA Lightstreamer Details
 - Server: `https://push.lightstreamer.com`
@@ -246,10 +242,22 @@ isspiss/
 - See `RESEARCH.md` for full API documentation
 
 ### Piss Detection Logic
-- **Piss start**: Tank level increases from previous value
-- **Piss end**: No tank level increase for 20 seconds
-- Simple timeout-based detection; no cooldown or debouncing
-- Edge case accepted: if final drops take >20s, brief "no" then back to "yes" is tolerable
+
+We track a boolean `trueTankLevelMayBeHigher` that indicates whether the true tank level might be higher than the last reported value (due to sensor truncation/rounding).
+
+**Core logic:**
+- **Level decreases**: Set `trueTankLevelMayBeHigher = true` with a 60-second timeout to reset to `false`. Each decrease resets this timeout.
+- **Level increases**: If `trueTankLevelMayBeHigher` is `false`, this is a genuine increase → trigger/maintain piss event. Then set `trueTankLevelMayBeHigher = false`.
+- **Piss end**: No increase for 20 seconds.
+
+**Why this works:**
+- Sensor readings oscillate due to truncation (e.g., bouncing between 26% and 27% when true level is ~26.5%). These oscillations can be as frequent as every 0.9 seconds or as slow as 22 seconds.
+- After a decrease, we assume the true level might be higher, so we don't trigger on the next increase (it could just be oscillation returning to the previous value).
+- After 60 seconds without a decrease, we're confident the reading is stable, so the next increase is a real piss event.
+
+**Startup behavior:** `trueTankLevelMayBeHigher` starts as `true`, so the first level update after construction doesn't trigger a false piss event.
+
+**Processor drain:** When the urine processor drains the tank (~1% every 5 minutes), the repeated decreases keep `trueTankLevelMayBeHigher` set to `true`, which naturally resets after draining stops. The detection logic handles this without special cases.
 
 ---
 
@@ -271,7 +279,7 @@ isspiss/
 - **"Yes" reveal**: Duration counter appears after 10 seconds as a delayed punchline
 - **Excessive ads mode**: Fixed-size semitransparent card (no rounded corners)
 
-### Phase 2: Backend (Current)
+### Phase 2: Backend
 - [x] Set up Cloudflare Workers project
 - [x] Research Lightstreamer connection (identified NODE3000005, NODE3000004)
 - [x] Implement Durable Object for state management

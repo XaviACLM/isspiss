@@ -2,6 +2,7 @@ import {
   LightstreamerClient,
   Subscription,
 } from 'lightstreamer-client-web';
+import { DurableObject } from 'cloudflare:workers';
 
 interface CrewMember {
   name: string;
@@ -10,50 +11,49 @@ interface CrewMember {
 
 interface PissState {
   isPissing: boolean;
-  tankLevel: number;
   lastPissEnded: string | null;
   currentPissStarted: string | null;
   crew: CrewMember[];
 }
 
-interface Env {
+export interface Env {
   PISS_MONITOR: DurableObjectNamespace;
 }
 
 const PISS_TIMEOUT_MS = 20_000; // 20 seconds without increase = piss ended
+const MAY_BE_HIGHER_TIMEOUT_MS = 60_000;
 const CREW_POLL_INTERVAL_MS = 1_200_000; // 20 minutes
 
-export class PissMonitor implements DurableObject {
-  private state: DurableObjectState;
+export class PissMonitor extends DurableObject {
   private pissState: PissState;
   private sseClients: Set<WritableStreamDefaultWriter>;
   private lsClient: LightstreamerClient | null = null;
   private pissTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private crewIntervalId: ReturnType<typeof setInterval> | null = null;
-  private lastTankLevel: number | null = null;
+  private mayBeHigherTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(state: DurableObjectState, env: Env) {
-    this.state = state;
+  private tankLevel: number = 0;
+  private trueTankLevelMayBeHigher: boolean = true;
+  private initialized: boolean = false;
+
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
     this.sseClients = new Set();
     this.pissState = {
       isPissing: false,
-      tankLevel: 0,
       lastPissEnded: null,
       currentPissStarted: null,
       crew: [],
     };
-
-    // Restore state from storage if available
-    this.state.blockConcurrencyWhile(async () => {
-      const stored = await this.state.storage.get<PissState>('pissState');
-      if (stored) {
-        this.pissState = stored;
-        this.lastTankLevel = stored.tankLevel;
-      }
-    });
   }
 
   async fetch(request: Request): Promise<Response> {
+    // Initialize on first request
+    if (!this.initialized) {
+      this.initialized = true;
+      await this.initialize();
+    }
+
     const url = new URL(request.url);
 
     if (url.pathname === '/status') {
@@ -61,18 +61,18 @@ export class PissMonitor implements DurableObject {
     }
 
     if (url.pathname === '/events') {
-      return this.handleSSE(request);
-    }
-
-    if (url.pathname === '/init') {
-      await this.initialize();
-      return new Response('Initialized');
+      try {
+        return this.handleSSE(request);
+      } catch {
+        // Client disconnected
+        return new Response(null, { status: 499 });
+      }
     }
 
     return new Response('Not found', { status: 404 });
   }
 
-  private async initialize(): Promise<void> {
+  async initialize(): Promise<void> {
     // Start Lightstreamer connection
     this.connectToNASA();
 
@@ -86,6 +86,8 @@ export class PissMonitor implements DurableObject {
       'https://push.lightstreamer.com',
       'ISSLIVE'
     );
+	
+	console.log("ctn1");
 
     this.lsClient.addListener({
       onStatusChange: (status: string) => {
@@ -118,57 +120,67 @@ export class PissMonitor implements DurableObject {
   }
 
   private handleTankUpdate(newLevel: number): void {
-    const oldLevel = this.lastTankLevel;
-    this.lastTankLevel = newLevel;
-    this.pissState.tankLevel = newLevel;
+	//TODO is this necessary? CHANGE broadcasts never trigger this if, but it's unclear if we also receive UPDATE broadcasts.
+	if ( newLevel==this.tankLevel ) { return; }
+	
+	const levelWentUp = newLevel > this.tankLevel;
+    this.tankLevel = newLevel;
+	
+	// if we can be sure tank level went up, then ensure we're in a piss event
+	if (!this.trueTankLevelMayBeHigher && levelWentUp) {
+	  this.beginOrMaintainPissEvent()
+	}
 
-    // Detect piss start: level increased
-    if (oldLevel !== null && newLevel > oldLevel) {
-      if (!this.pissState.isPissing) {
-        // Piss just started
-        this.pissState.isPissing = true;
-        this.pissState.currentPissStarted = new Date().toISOString();
-        this.broadcast('pissStart', {
-          tankLevel: newLevel,
-          startedAt: this.pissState.currentPissStarted,
-        });
-      }
-
-      // Reset the timeout - piss is ongoing
-      this.resetPissTimeout();
-    }
-
-    // Broadcast tank update
-    this.broadcast('tankUpdate', { tankLevel: newLevel });
-
-    // Persist state
-    this.state.storage.put('pissState', this.pissState);
+	// update the value (and timeout) of tankLevelMayBeHigher
+	if (levelWentUp) {
+		this.trueTankLevelMayBeHigher = false;
+	} else {
+	  this.trueTankLevelMayBeHigher = true;
+	  if (this.mayBeHigherTimeoutId) {
+	    clearTimeout(this.mayBeHigherTimeoutId);
+	  }
+	  this.mayBeHigherTimeoutId = setTimeout(
+	    () => {this.trueTankLevelMayBeHigher = false;},
+	    MAY_BE_HIGHER_TIMEOUT_MS
+	  );
+	}
   }
 
-  private resetPissTimeout(): void {
+  private beginOrMaintainPissEvent(): void {
+    if (!this.pissState.isPissing) {
+      // Piss just started
+	  this.pissState.isPissing = true;
+	  this.pissState.currentPissStarted = new Date().toISOString();
+	  this.broadcast('pissStart', {
+	    startedAt: this.pissState.currentPissStarted,
+	  });
+    }
+
+    // Reset the timeout - piss is ongoing
     if (this.pissTimeoutId) {
       clearTimeout(this.pissTimeoutId);
     }
 
     this.pissTimeoutId = setTimeout(() => {
-      if (this.pissState.isPissing) {
-        // Piss ended
-        const endedAt = new Date().toISOString();
-        const startedAt = this.pissState.currentPissStarted;
-
-        this.pissState.isPissing = false;
-        this.pissState.lastPissEnded = endedAt;
-        this.pissState.currentPissStarted = null;
-
-        this.broadcast('pissEnd', {
-          tankLevel: this.pissState.tankLevel,
-          endedAt,
-          startedAt,
-        });
-
-        this.state.storage.put('pissState', this.pissState);
-      }
+      this.endPissEvent();
     }, PISS_TIMEOUT_MS);
+  }
+  
+  private endPissEvent(): void {
+	//useless check if we only get CHANGE broadcasts, but would trigger on UPDATES. can't be sure
+	if (this.pissState.isPissing) {return;}
+	
+    const endedAt = new Date().toISOString();
+    const startedAt = this.pissState.currentPissStarted;
+
+    this.pissState.isPissing = false;
+    this.pissState.lastPissEnded = endedAt;
+    this.pissState.currentPissStarted = null;
+
+    this.broadcast('pissEnd', {
+      endedAt,
+      startedAt,
+    });
   }
 
   private async fetchCrew(): Promise<void> {
@@ -236,7 +248,6 @@ export class PissMonitor implements DurableObject {
       if (oldCrewJson !== newCrewJson) {
         this.pissState.crew = crewMembers;
         this.broadcast('crewUpdate', { crew: crewMembers });
-        this.state.storage.put('pissState', this.pissState);
         console.log(`[Crew] Updated: ${crewMembers.length} astronauts`);
       }
     } catch (error) {
@@ -248,27 +259,22 @@ export class PissMonitor implements DurableObject {
     const { readable, writable } = new TransformStream();
     const writer = writable.getWriter();
 
-    // Send initial status
-    const statusEvent = `event: status\ndata: ${JSON.stringify(this.pissState)}\n\n`;
-    writer.write(new TextEncoder().encode(statusEvent));
-
     // Add to clients set
     this.sseClients.add(writer);
 
-    // Keep alive
-    const keepAlive = setInterval(() => {
-      writer.write(new TextEncoder().encode(': keepalive\n\n')).catch(() => {
-        clearInterval(keepAlive);
-        this.sseClients.delete(writer);
-      });
-    }, 30000);
-
-    // Clean up on abort
-    request.signal.addEventListener('abort', () => {
+    const cleanup = () => {
       clearInterval(keepAlive);
       this.sseClients.delete(writer);
       writer.close().catch(() => {});
-    });
+    };
+
+    // Keep alive
+    const keepAlive = setInterval(() => {
+      writer.write(new TextEncoder().encode(': keepalive\n\n')).catch(cleanup);
+    }, 30000);
+
+    // Clean up on abort
+    request.signal.addEventListener('abort', cleanup);
 
     return new Response(readable, {
       headers: {

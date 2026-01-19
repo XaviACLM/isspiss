@@ -9,6 +9,7 @@ echo.
 
 start "ISS Piss Backend" cmd /k "cd backend && npm run dev"
 timeout /t 3 /nobreak >nul
+#&& set VITE_BACKEND_URL=http://localhost:8787 
 start "ISS Piss Frontend" cmd /k "cd frontend && npm run dev"
 
 echo.

@@ -1,8 +1,4 @@
-export { PissMonitor } from './PissMonitor';
-
-interface Env {
-  PISS_MONITOR: DurableObjectNamespace;
-}
+import { PissMonitor, Env } from './PissMonitor';
 
 // CORS headers for frontend
 const corsHeaders = {
@@ -10,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
+
+export { PissMonitor };
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -24,19 +22,21 @@ export default {
     const id = env.PISS_MONITOR.idFromName('singleton');
     const monitor = env.PISS_MONITOR.get(id);
 
-    // Route to Durable Object
     if (url.pathname === '/status') {
-      const response = await monitor.fetch(new Request('http://do/status'));
+      const response = await monitor.fetch(new Request('http://internal/status'));
       return addCorsHeaders(response);
     }
 
     if (url.pathname === '/events') {
-      // Initialize the DO if needed, then handle SSE
-      await monitor.fetch(new Request('http://do/init'));
-      const response = await monitor.fetch(new Request('http://do/events', {
-        signal: request.signal,
-      }));
-      return addCorsHeaders(response);
+      try {
+        const response = await monitor.fetch(new Request('http://internal/events', {
+          signal: request.signal,
+        }));
+        return addCorsHeaders(response);
+      } catch {
+        // Client disconnected - this is normal, not an error
+        return new Response(null, { status: 499 });
+      }
     }
 
     // 404 for everything else

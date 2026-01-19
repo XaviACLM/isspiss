@@ -36,12 +36,23 @@ URL: https://ntrs.nasa.gov/api/citations/20110012703/downloads/20110012703.pdf
 The ISS Mimic project displays all live ISS telemetry with labels:
 https://iss-mimic.github.io/Mimic/
 
-**Observations from telemetry watching (Jan 2026):**
-- Tank level updates are not continuous; they come in bursts
-- During a piss event, level increases ~1% every 5 seconds
+**Observations from telemetry analysis:**
+
+*Piss events:*
+- Level increases take ~5 seconds per 1%
 - A single event can raise the level 5-10%
-- We did not notice any changes in the urine processor state, which staged at 32
-- TODO: Analyze full 48 hour log for more patterns - urine processor may become active when tank is full.
+
+*Sensor oscillation:*
+- Tank readings oscillate due to truncation (e.g., true level ~26.5% bounces between 26% and 27%)
+- Oscillation frequency varies widely: as fast as every 0.9 seconds, as slow as every 22 seconds
+- One anomalous 13+ minute pause was observed
+- Oscillations occur within ~10% of the truncation boundary
+
+*Urine processor:*
+- Drains the tank at ~1% every 5 minutes once stable
+- First 2-4% of drainage shows some instability
+- For about 1 minute after each percentage drop, oscillations as wide as 36 seconds may occur
+- NODE3000004 (Urine Processor State) stays at 32 while inactive, 16 while active. Specific meaning of this or whether it has other values is unclear.
 
 ---
 
@@ -88,6 +99,6 @@ Each crew member has an `astronaut` object containing:
 
 ## TODO
 
-- [ ] Analyze 2-day-long telemetry log for patterns
-- [ ] Determine NODE3000004 values and what they mean
+- [x] Analyze 2-day-long telemetry log for patterns
+- [x] Determine NODE3000004 values and what they mean (stayed at 32 during observation)
 - [x] Replace Open Notify with Launch Library 2 API in backend

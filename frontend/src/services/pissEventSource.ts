@@ -12,22 +12,22 @@ class RealPissEventSource implements PissEventSource {
   subscribe(handlers: PissEventHandlers): () => void {
     this.eventSource = new EventSource(`${BACKEND_URL}/events`);
 
-    this.eventSource.addEventListener('status', (event) => {
-      const data = JSON.parse(event.data);
-      const state: PissState = {
-        isPissing: data.isPissing,
-        tankLevel: data.tankLevel,
-        lastPissEnded: parseDate(data.lastPissEnded),
-        currentPissStarted: parseDate(data.currentPissStarted),
-        crew: data.crew ?? [],
-      };
-      handlers.onStatus(state);
-    });
+    fetch(`${BACKEND_URL}/status`)
+	  .then(res => res.json())
+	  .then(data => {
+		const state: PissState = {
+	      isPissing: data.isPissing,
+		  lastPissEnded: parseDate(data.lastPissEnded),
+		  currentPissStarted: parseDate(data.currentPissStarted),
+		  crew: data.crew,
+		};
+		handlers.onStatus(state);
+	  })
+	  .catch(err => console.error(`[Status] Fetch error:`,err));
 
     this.eventSource.addEventListener('pissStart', (event) => {
       const data = JSON.parse(event.data);
       handlers.onPissStart({
-        tankLevel: data.tankLevel,
         startedAt: new Date(data.startedAt),
       });
     });
@@ -35,23 +35,14 @@ class RealPissEventSource implements PissEventSource {
     this.eventSource.addEventListener('pissEnd', (event) => {
       const data = JSON.parse(event.data);
       handlers.onPissEnd({
-        tankLevel: data.tankLevel,
         endedAt: new Date(data.endedAt),
-        deltaPercent: data.deltaPercent,
-      });
-    });
-
-    this.eventSource.addEventListener('tankUpdate', (event) => {
-      const data = JSON.parse(event.data);
-      handlers.onTankUpdate({
-        tankLevel: data.tankLevel,
       });
     });
 
     this.eventSource.addEventListener('crewUpdate', (event) => {
       const data = JSON.parse(event.data);
       handlers.onCrewUpdate({
-        crew: data.crew ?? [],
+        crew: data.crew,
       });
     });
 
